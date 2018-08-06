@@ -13,6 +13,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "t4", "t4\t4.vcxproj", "{992
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "t5", "t5\t5.vcxproj", "{8B89A4A7-1FC0-428E-8E2B-94B5968A665D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "t6", "t6\t6.vcxproj", "{EC440D85-8CBF-4260-8E80-2192FDF634EF}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "t7", "t7\t7.vcxproj", "{F2D50C68-8801-49A5-B8B9-8A0329526F39}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -61,6 +65,22 @@ Global
 		{8B89A4A7-1FC0-428E-8E2B-94B5968A665D}.Release|x64.Build.0 = Release|x64
 		{8B89A4A7-1FC0-428E-8E2B-94B5968A665D}.Release|x86.ActiveCfg = Release|Win32
 		{8B89A4A7-1FC0-428E-8E2B-94B5968A665D}.Release|x86.Build.0 = Release|Win32
+		{EC440D85-8CBF-4260-8E80-2192FDF634EF}.Debug|x64.ActiveCfg = Debug|x64
+		{EC440D85-8CBF-4260-8E80-2192FDF634EF}.Debug|x64.Build.0 = Debug|x64
+		{EC440D85-8CBF-4260-8E80-2192FDF634EF}.Debug|x86.ActiveCfg = Debug|Win32
+		{EC440D85-8CBF-4260-8E80-2192FDF634EF}.Debug|x86.Build.0 = Debug|Win32
+		{EC440D85-8CBF-4260-8E80-2192FDF634EF}.Release|x64.ActiveCfg = Release|x64
+		{EC440D85-8CBF-4260-8E80-2192FDF634EF}.Release|x64.Build.0 = Release|x64
+		{EC440D85-8CBF-4260-8E80-2192FDF634EF}.Release|x86.ActiveCfg = Release|Win32
+		{EC440D85-8CBF-4260-8E80-2192FDF634EF}.Release|x86.Build.0 = Release|Win32
+		{F2D50C68-8801-49A5-B8B9-8A0329526F39}.Debug|x64.ActiveCfg = Debug|x64
+		{F2D50C68-8801-49A5-B8B9-8A0329526F39}.Debug|x64.Build.0 = Debug|x64
+		{F2D50C68-8801-49A5-B8B9-8A0329526F39}.Debug|x86.ActiveCfg = Debug|Win32
+		{F2D50C68-8801-49A5-B8B9-8A0329526F39}.Debug|x86.Build.0 = Debug|Win32
+		{F2D50C68-8801-49A5-B8B9-8A0329526F39}.Release|x64.ActiveCfg = Release|x64
+		{F2D50C68-8801-49A5-B8B9-8A0329526F39}.Release|x64.Build.0 = Release|x64
+		{F2D50C68-8801-49A5-B8B9-8A0329526F39}.Release|x86.ActiveCfg = Release|Win32
+		{F2D50C68-8801-49A5-B8B9-8A0329526F39}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
