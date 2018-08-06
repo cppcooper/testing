@@ -1,3 +1,4 @@
+#include "posh.h"
 /**********************************************************************
  *
  * StackWalker.cpp
@@ -81,8 +82,7 @@
  *   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  **********************************************************************/
-#include "posh.h"
-#if defined POSH_COMPILER_MSVC || defined POSH_COMPILER_GCC
+
 #include "StackWalker.h"
 
 #include <stdio.h>
@@ -90,6 +90,7 @@
 #include <tchar.h>
 #include <windows.h>
 #pragma comment(lib, "version.lib") // for "VerQueryValue"
+#pragma comment(lib, "Dbghelp.lib")
 #pragma warning(disable : 4826)
 
 
@@ -350,9 +351,15 @@ public:
         }
 #endif
       }
+      else{
+          printf(".local found");
+      }
     }
     if (m_hDbhHelp == NULL) // if not already loaded, try to load a default-one
+    {
+        printf("Reached the simple load\n");
       m_hDbhHelp = LoadLibrary(_T("dbghelp.dll"));
+    }
     if (m_hDbhHelp == NULL)
       return FALSE;
     pSI = (tSI)GetProcAddress(m_hDbhHelp, "SymInitialize");
@@ -370,7 +377,7 @@ public:
     pUDSN = (tUDSN)GetProcAddress(m_hDbhHelp, "UnDecorateSymbolName");
     pSLM = (tSLM)GetProcAddress(m_hDbhHelp, "SymLoadModule64");
     pSGSP = (tSGSP)GetProcAddress(m_hDbhHelp, "SymGetSearchPath");
-
+    printf("loaded functions\n");
     if (pSC == NULL || pSFTA == NULL || pSGMB == NULL || pSGMI == NULL || pSGO == NULL ||
         pSGSFA == NULL || pSI == NULL || pSSO == NULL || pSW == NULL || pUDSN == NULL ||
         pSLM == NULL)
@@ -1069,7 +1076,27 @@ BOOL StackWalker::ShowCallstack(HANDLE                    hThread,
     if (GetThreadId(hThread) == GetCurrentThreadId())
 #endif
     {
+#if defined POSH_COMPILER_MSVC
+  #if defined POSH_OS_WIN64
       GET_CURRENT_CONTEXT_STACKWALKER_CODEPLEX(c, USED_CONTEXT_FLAGS);
+  #else
+      do
+      {
+        memset(&c, 0, sizeof(CONTEXT));
+        c.ContextFlags = USED_CONTEXT_FLAGS;
+        __asm {
+          call x;
+        x:
+          pop eax;
+          mov[c.Eip],eax;
+          mov [c.Ebp], ebp;
+          mov[c.Esp],esp;
+        };
+      } while (0);
+  #endif
+#elif POSH_COMPILER_GCC
+#error "gcc not supported yet"
+#endif
     }
     else
     {
@@ -1468,5 +1495,3 @@ void StackWalker::OnOutput(LPCSTR buffer)
 {
   OutputDebugStringA(buffer);
 }
-
-#endif

@@ -18,6 +18,8 @@ Well mine is based on that comment, because I have changed very little outside o
 #include <WinBase.h>
 #include <fstream>
 #pragma comment(lib, "Dbghelp.lib")
+typedef USHORT( WINAPI *CaptureStackBackTraceType )( ULONG, ULONG, PVOID*, PULONG );
+
 
 std::string TraceStack (__int8 skip,unsigned __int8 capture)
 {
@@ -28,7 +30,6 @@ std::string TraceStack (__int8 skip,unsigned __int8 capture)
     const int kMaxCallers = 62;
 
     capture = capture > 62 ? 62 : capture;
-    typedef USHORT( WINAPI *CaptureStackBackTraceType )( __in ULONG, __in ULONG, __out PVOID*, __out_opt PULONG );
     
     CaptureStackBackTraceType func = (CaptureStackBackTraceType)( GetProcAddress( LoadLibrary( "kernel32.dll" ), "RtlCaptureStackBackTrace" ) );
     if ( func == NULL )

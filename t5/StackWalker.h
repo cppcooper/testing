@@ -225,17 +225,17 @@ protected:
 // clang-format off
 // The following should be enough for walking the callstack...
 #define GET_CURRENT_CONTEXT_STACKWALKER_CODEPLEX(c, contextFlags) \
-  do                                                              \
-  {                                                               \
-    memset(&c, 0, sizeof(CONTEXT));                               \
-    c.ContextFlags = contextFlags;                                \
-    __asm {                                                       \
-        call x                                                    \
-     x: pop eax                                                   \
-        mov c.Eip, eax                                            \
-        mov c.Ebp, ebp                                            \
-        mov c.Esp, esp                                            \
-    };                                                            \
+  do {\
+    memset(&c, 0, sizeof(CONTEXT));\
+    c.ContextFlags = contextFlags;\
+    __asm {                     \
+        call x;                 \
+     x:                         \
+        pop eax;                \
+        mov [c.Eip], eax;       \
+        mov [c.Ebp], ebp;       \
+        mov [c.Esp], esp;       \
+    };                          \
   } while (0);
 // clang-format on
 #endif
