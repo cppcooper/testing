@@ -11,6 +11,11 @@ Well mine is based on that comment, because I have changed very little outside o
 */
 
 #include "posh.h"
+#if defined POSH_OS_LINUX
+    #error "Linux is not supported"
+#endif
+
+#include <cassert>
 #include <sstream>
 #include <iostream>
 #include <windows.h>
@@ -20,10 +25,14 @@ Well mine is based on that comment, because I have changed very little outside o
 //#pragma comment(lib, "Dbghelp.lib")
 auto dbglib_handle = LoadLibrary("dbghelp.dll");
 #elif defined POSH_COMPILER_GCC
-auto dbglib_handle = LoadLibrary("./dbghelp.dll");
+    #if defined POSH_OS_WIN64
+        auto dbglib_handle = LoadLibrary("./wine_dbghelpx64.dll");
+    #else
+        auto dbglib_handle = LoadLibrary("./wine_dbghelpx86.dll");
+    #endif
 #endif
 
-#if defined POSH_OS_WIN32 || defined POSH_OS_WIN64
+#if defined POSH_OS_WIN32
 auto kernel32_handle = LoadLibrary("kernel32.dll");
 #endif
 
@@ -40,12 +49,11 @@ std::string stacktrace (__int8 skip = 0,unsigned __int8 capture = 62)
     typedef BOOL(WINAPI *SymInitFn)(HANDLE,PCSTR,BOOL);
     typedef BOOL(WINAPI *SymFromAddrFn)(HANDLE,DWORD64,PDWORD64,PSYMBOL_INFO);
     auto bktrace = (CaptureStackBackTraceFn)( GetProcAddress( kernel32_handle, "RtlCaptureStackBackTrace" ) );
-    
     auto SymInit = (SymInitFn)(GetProcAddress(dbglib_handle,"SymInitialize"));
     auto SymAddress = (SymFromAddrFn)(GetProcAddress(dbglib_handle,"SymFromAddr"));
-
-    if ( bktrace == NULL )
+    if ( bktrace == NULL || SymInit == NULL || SymAddress == NULL )
     {
+        std::cerr << "failed to load functions from dll.";
         return ""; // WOE 29.SEP.2010
     }
 
@@ -53,9 +61,20 @@ std::string stacktrace (__int8 skip = 0,unsigned __int8 capture = 62)
     symbol->MaxNameLen = 255;
     symbol->SizeOfStruct = sizeof( SYMBOL_INFO );
 
+//std::cout is spammed with warnings in x64, so we want to reroute that to a dummy buffer
+#if defined POSH_OS_WIN64
+    class dummybuf : public std::streambuf{};
+    dummybuf dummybuffer;
+    auto orig = std::cout.rdbuf();
+    std::cout.rdbuf(&dummybuffer);
+#endif
     HANDLE process = GetCurrentProcess();
     //SymInitialize( process, NULL, TRUE );
     SymInit( process, NULL, TRUE );
+#if defined POSH_OS_WIN64
+    std::cout.rdbuf(orig);
+#endif
+
     void* callers_stack[kMaxCallers];
     unsigned short frames = bktrace( 0, kMaxCallers, callers_stack, NULL );
 
@@ -86,5 +105,8 @@ void f1(){
 }
 
 int main(){
+    FILE * AssertLog;
+    freopen_s( &AssertLog, "assert.log", "w", stderr );
+    std::cerr << "test";
     f1();
 }
