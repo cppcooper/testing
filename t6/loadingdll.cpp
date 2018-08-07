@@ -18,12 +18,13 @@ Well mine is based on that comment, because I have changed very little outside o
 #include <cassert>
 #include <sstream>
 #include <iostream>
+#include <fstream>
 #include <windows.h>
 #include <dbghelp.h>
 
 #if defined POSH_COMPILER_MSVC
 //#pragma comment(lib, "Dbghelp.lib")
-auto dbglib_handle = LoadLibrary("dbghelp.dll");
+    auto dbglib_handle = LoadLibrary("dbghelp.dll");
 #elif defined POSH_COMPILER_GCC
     #if defined POSH_OS_WIN64
         auto dbglib_handle = LoadLibrary("./wine_dbghelpx64.dll");
@@ -34,28 +35,40 @@ auto dbglib_handle = LoadLibrary("dbghelp.dll");
 
 #if defined POSH_OS_WIN32
 auto kernel32_handle = LoadLibrary("kernel32.dll");
+typedef USHORT(WINAPI *CaptureStackBackTraceFn)(ULONG,ULONG,PVOID*,PULONG);
+typedef BOOL(WINAPI *SymInitFn)(HANDLE,PCSTR,BOOL);
+typedef BOOL(WINAPI *SymFromAddrFn)(HANDLE,DWORD64,PDWORD64,PSYMBOL_INFO);
 #endif
 
 std::string stacktrace (__int8 skip = 0,unsigned __int8 capture = 62)
 {
-    std::stringstream os;
-    // Quote from Microsoft Documentation:
-    // ## Windows Server 2003 and Windows XP:  
-    // ## The sum of the FramesToSkip and FramesToCapture parameters must be less than 63.
-    const int kMaxCallers = 62;
-
-    capture = capture > 62 ? 62 : capture;
-    typedef USHORT(WINAPI *CaptureStackBackTraceFn)(ULONG,ULONG,PVOID*,PULONG);
-    typedef BOOL(WINAPI *SymInitFn)(HANDLE,PCSTR,BOOL);
-    typedef BOOL(WINAPI *SymFromAddrFn)(HANDLE,DWORD64,PDWORD64,PSYMBOL_INFO);
+    if (kernel32_handle == NULL){
+        std::cerr << "failed to load kernel32 dll.";
+        return "";
+    }
+    if (dbglib_handle == NULL){
+        std::cerr << "failed to load dbghelp dll.";
+        return "";
+    }
     auto bktrace = (CaptureStackBackTraceFn)( GetProcAddress( kernel32_handle, "RtlCaptureStackBackTrace" ) );
     auto SymInit = (SymInitFn)(GetProcAddress(dbglib_handle,"SymInitialize"));
     auto SymAddress = (SymFromAddrFn)(GetProcAddress(dbglib_handle,"SymFromAddr"));
-    if ( bktrace == NULL || SymInit == NULL || SymAddress == NULL )
-    {
-        std::cerr << "failed to load functions from dll.";
-        return ""; // WOE 29.SEP.2010
+    if (bktrace == NULL || SymInit == NULL || SymAddress == NULL){
+        if(bktrace == NULL)
+            std::cerr << "failed to load RtlCaptureStackBackTrace from dll.\n";
+        if(SymInit == NULL)
+            std::cerr << "failed to load SymFromAddr from dll.\n";
+        if(SymAddress == NULL)
+            std::cerr << "failed to load SymInitialize from dll.\n";
+        return "";
     }
+
+    // Quote from Microsoft Documentation:
+    // ## Windows Server 2003 and Windows XP:  
+    // ## The sum of the FramesToSkip and FramesToCapture parameters must be less than 63.
+    std::stringstream os;
+    const int kMaxCallers = 62;
+    capture = capture > 62 ? 62 : capture;
 
     SYMBOL_INFO* symbol = (SYMBOL_INFO *)calloc( sizeof( SYMBOL_INFO ) + 256 * sizeof( char ), 1 );
     symbol->MaxNameLen = 255;
@@ -87,8 +100,7 @@ std::string stacktrace (__int8 skip = 0,unsigned __int8 capture = 62)
         os << "\t\tFrame: " << i - skip 
             << ",\t" << callers_stack[i] 
             << " _Symbol:\t0x" << (void*)symbol->Address 
-            << ", " << symbol->Name 
-            << ", " << symbol->Register
+            << ", " << symbol->Name
             << std::endl;
     }
 
@@ -105,8 +117,9 @@ void f1(){
 }
 
 int main(){
-    FILE * AssertLog;
-    freopen_s( &AssertLog, "assert.log", "w", stderr );
-    std::cerr << "test";
+    std::ofstream errorLog("errors.log");
+    auto orig = std::cerr.rdbuf();
+    std::cerr.rdbuf(errorLog.rdbuf());
     f1();
+    std::cerr.rdbuf(orig);
 }
