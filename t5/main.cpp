@@ -2,7 +2,7 @@
 #include <string>
 
 /**/
-#include "posh.h"
+#include "../posh.h"
 #if defined POSH_OS_LINUX && defined POSH_COMPILER_GCC
     #include <stdio.h>
     #include <execinfo.h>

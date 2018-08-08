@@ -10,7 +10,7 @@ https://stackoverflow.com/q/590160
 Well mine is based on that comment, because I have changed very little outside of formatting.
 */
 
-#include "posh.h"
+#include "../posh.h"
 #if defined POSH_OS_LINUX
     #error "Linux is not supported"
 #endif
