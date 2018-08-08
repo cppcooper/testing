@@ -21,6 +21,7 @@ Well mine is based on that comment, because I have changed very little outside o
 #include <fstream>
 #include <windows.h>
 #include <dbghelp.h>
+#include <io.h>
 
 #if defined POSH_COMPILER_MSVC
 //#pragma comment(lib, "Dbghelp.lib")
@@ -40,6 +41,8 @@ typedef BOOL(WINAPI *SymInitFn)(HANDLE,PCSTR,BOOL);
 typedef BOOL(WINAPI *SymFromAddrFn)(HANDLE,DWORD64,PDWORD64,PSYMBOL_INFO);
 #endif
 
+void toggle_conOutput();
+
 std::string stacktrace (__int8 skip = 0,unsigned __int8 capture = 62)
 {
     if (kernel32_handle == NULL){
@@ -51,15 +54,22 @@ std::string stacktrace (__int8 skip = 0,unsigned __int8 capture = 62)
         return "";
     }
     auto bktrace = (CaptureStackBackTraceFn)( GetProcAddress( kernel32_handle, "RtlCaptureStackBackTrace" ) );
-    auto SymInit = (SymInitFn)(GetProcAddress(dbglib_handle,"SymInitialize"));
-    auto SymAddress = (SymFromAddrFn)(GetProcAddress(dbglib_handle,"SymFromAddr"));
+#if defined POSH_OS_WIN64
+    const char* symInit_sym = "SymInitialize";
+    const char* symAddr_sym = "SymFromAddr";
+#else
+    const char* symInit_sym = "SymInitialize@12";
+    const char* symAddr_sym = "SymFromAddr@20";
+#endif
+    auto SymInit = (SymInitFn)(GetProcAddress(dbglib_handle,symInit_sym));
+    auto SymAddress = (SymFromAddrFn)(GetProcAddress(dbglib_handle,symAddr_sym));
     if (bktrace == NULL || SymInit == NULL || SymAddress == NULL){
         if(bktrace == NULL)
             std::cerr << "failed to load RtlCaptureStackBackTrace from dll.\n";
         if(SymInit == NULL)
-            std::cerr << "failed to load SymFromAddr from dll.\n";
+            std::cerr << "failed to load " << symInit_sym << " from dll.\n";
         if(SymAddress == NULL)
-            std::cerr << "failed to load SymInitialize from dll.\n";
+            std::cerr << "failed to load " << symAddr_sym << " from dll.\n";
         return "";
     }
 
@@ -75,19 +85,16 @@ std::string stacktrace (__int8 skip = 0,unsigned __int8 capture = 62)
     symbol->SizeOfStruct = sizeof( SYMBOL_INFO );
 
 //std::cout is spammed with warnings in x64, so we want to reroute that to a dummy buffer
-#if defined POSH_OS_WIN64
-    class dummybuf : public std::streambuf{};
-    dummybuf dummybuffer;
-    auto orig = std::cout.rdbuf();
-    std::cout.rdbuf(&dummybuffer);
+#if defined POSH_COMPILER_GCC
+    toggle_conOutput();
 #endif
     HANDLE process = GetCurrentProcess();
     //SymInitialize( process, NULL, TRUE );
     SymInit( process, NULL, TRUE );
-#if defined POSH_OS_WIN64
-    std::cout.rdbuf(orig);
+#if defined POSH_COMPILER_GCC
+    toggle_conOutput();
 #endif
-
+    std::cerr << "test";
     void* callers_stack[kMaxCallers];
     unsigned short frames = bktrace( 0, kMaxCallers, callers_stack, NULL );
 
@@ -122,4 +129,39 @@ int main(){
     std::cerr.rdbuf(errorLog.rdbuf());
     f1();
     std::cerr.rdbuf(orig);
+}
+
+
+void toggle_conOutput(){
+  static bool redirected = false;
+#if defined POSH_OS_LINUX
+  static bool do_stdout = isatty(fileno(stdout)) == 1;
+  static bool do_stderr = isatty(fileno(stderr)) == 1;
+#elif defined POSH_OS_WIN32
+  static bool do_stdout = _isatty(_fileno(stdout)) != 0;
+  static bool do_stderr = _isatty(_fileno(stderr)) != 0;
+#endif
+  if(!redirected){
+    redirected = true;
+#if defined POSH_OS_LINUX
+    if(do_stdout) freopen( "/dev/null", "w", stdout );
+    if(do_stderr) freopen( "/dev/null", "w", stderr );
+#elif defined POSH_OS_WIN32
+    if(do_stdout) freopen( "nul", "w", stdout );
+    if(do_stderr) freopen( "nul", "w", stderr );
+#else
+    #error "OS not supported";
+#endif
+  }else{
+    redirected = false;
+#if defined POSH_OS_LINUX
+    if(do_stdout) freopen("/dev/tty","a",stdout);
+    if(do_stderr) freopen("/dev/tty","a",stderr);
+#elif defined POSH_OS_WIN32
+    if(do_stdout) freopen("CONOUT$","a",stdout);
+    if(do_stderr) freopen("CONOUT$","a",stderr);
+#else
+    #error "OS not supported";
+#endif
+  }
 }
