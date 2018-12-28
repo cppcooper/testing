@@ -1,13 +1,16 @@
 #include <windows.h>
+#include <iostream>
 #include <cstdio>
 #include <cstdlib>
 #include <thread>
+#include <sstream>
 #include "Tracker.h"
 #include "key_wait.h"
 
 time_lord bench;
 bool loop = true;
 bool paused = false;
+int initial_time = 0;
 
 void sleep(uint16_t milli_seconds){
     std::this_thread::sleep_for(std::chrono::milliseconds(milli_seconds));
@@ -45,7 +48,7 @@ BOOL CtrlHandler( DWORD fdwCtrlType )
 } 
 
 void TrackTime(){
-    bench.start();
+    bench.start(initial_time);
     while( true ){
         short key = key_wait<void>(&UpdateTime);
         switch( key ){
@@ -64,8 +67,15 @@ void TrackTime(){
     }
 }
 
-int main( void ) 
-{ 
+int main( int argc, char* argv[] ){ 
+    if( argc >= 2 ){
+        std::stringstream converter(argv[1]);
+        converter >> initial_time;
+        if( converter.fail() ){
+            std::cerr << "Invalid parameter. Please enter a number for the initial time.";
+            return 2;
+        }
+    }
     if( SetConsoleCtrlHandler( (PHANDLER_ROUTINE) CtrlHandler, TRUE ) ) 
     { 
         printf("\nTime Tracker\n-----------");

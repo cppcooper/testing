@@ -17,7 +17,7 @@ public:
     time_lord(){
         start();
     }
-    void start();
+    void start(int initial_time = 0);
     void stop();
     void pause();
     void resume();

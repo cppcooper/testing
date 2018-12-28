@@ -30,10 +30,12 @@ std::string formatDuration(seconds time)
     return o.str();
 }
 
-void time_lord::start(){
+void time_lord::start(int initial_time){
     //printf("\nstart\n");
     m_paused = false;
     m_start = m_end = my_clock.now();
+    duration<double> t(initial_time * 60);
+    m_seconds = t;
 }
 void time_lord::stop(){
     //printf("\nstop\n");

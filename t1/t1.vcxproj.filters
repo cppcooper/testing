@@ -24,7 +24,7 @@
     <ClCompile Include="Tracker.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="key_wait.cpp">
+    <ClCompile Include="_key_wait.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

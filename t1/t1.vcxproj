@@ -115,7 +115,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="key_wait.cpp" />
+    <ClCompile Include="_key_wait.cpp" />
     <ClCompile Include="key_wait.h" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="Tracker.cpp" />
