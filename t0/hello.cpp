@@ -2,6 +2,7 @@
 #include <exception>
 #include <iostream>
 #include <vector>
+//#include <thread>
 using namespace std;
 using namespace winreg;
 
@@ -11,11 +12,12 @@ bool EnableEscapeCodes(){
         const string testSubKey = "Console";
         RegKey key( HKEY_CURRENT_USER, testSubKey );
         const DWORD value = 0x1;
-        key.SetDwordValue("VirtualTerminalLevel", value);
-        DWORD testDw1 = key.GetDwordValue("VirtualTerminalLevel");
-        if (testDw1 != value){
-            return false;
+        bool hascolour = key.HasDword("VirtualTerminalLevel");
+        if(hascolour){
+            hascolour = 0x0 < key.GetDwordValue("VirtualTerminalLevel");
         }
+        key.SetDwordValue("VirtualTerminalLevel", value);
+        return hascolour;
     }
     catch (const RegException& e)
     {
@@ -28,8 +30,6 @@ bool EnableEscapeCodes(){
         cout << "\n*** ERROR: " << e.what() << '\n';
         return false;
     }
-
-    return true;
 }
 
 int main(){

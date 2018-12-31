@@ -213,6 +213,7 @@ public:
     // 
 
     DWORD GetDwordValue(const std::string& valueName);
+    bool HasDword(const std::string& valueName);
     ULONGLONG GetQwordValue(const std::string& valueName);
     std::string GetStringValue(const std::string& valueName);
     
@@ -769,6 +770,30 @@ inline void RegKey::SetBinaryValue(
     }
 }
 
+inline bool RegKey::HasDword(const std::string& valueName)
+{
+    _ASSERTE(IsValid());
+
+    DWORD data = 0;                 // to be read from the registry
+    DWORD dataSize = sizeof(data);  // size of data, in bytes
+
+    const DWORD flags = RRF_RT_REG_DWORD;
+    LONG retCode = ::RegGetValue(
+        m_hKey,
+        nullptr, // no subkey
+        valueName.c_str(),
+        flags,
+        nullptr, // type not required
+        &data,
+        &dataSize
+    );
+    if (retCode != ERROR_SUCCESS)
+    {
+        return false;
+    }
+
+    return true;
+}
 
 inline DWORD RegKey::GetDwordValue(const std::string& valueName)
 {
