@@ -10,3 +10,4 @@ Just vs2017 solution full of light weight projects for testing implementations.
 * t7 - inline assembly hello world
 * t8 - stdout/stderr/cout/cerr redirection and restoration
 * t9 - testing c++17 filesystem recursive directory iterators
+test update
